@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>账单 · 简账</title>
+<script src="theme.js"></script>
+<script src="accent.js"></script>
+<meta name="theme-color" content="#4C6FFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="简账">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="lock.css">
+<link rel="stylesheet" href="calendar.css">
+<link rel="stylesheet" href="extra.css">
+<style>
+  .monthbar{display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 0 6px}
+  .monthbar button{border:0;background:#fff;width:30px;height:30px;border-radius:10px;
+    font-size:15px;color:var(--text-2);cursor:pointer;line-height:1}
+  .monthbar .m{font-size:15px;font-weight:650;min-width:96px;text-align:center}
+  .filtr{display:flex;gap:8px;padding:6px 0 4px;overflow-x:auto}
+  .filtr .chip{background:#fff}
+  .day-sum{font-weight:400;font-variant-numeric:tabular-nums}
+  .searchbox{display:none;margin:4px 0 8px}
+  .searchbox.show{display:block}
+  .searchbox input{width:100%;border:0;background:#fff;border-radius:12px;
+    padding:12px 14px;font-size:15px;font-family:inherit;outline:none}
+  .swipe.open .record,.swipe.dragging .record{padding:13px 10px;gap:8px}
+  .swipe.open .record .sub,.swipe.dragging .record .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero"></div>
+
+  <header class="topbar">
+    <div class="title">账单</div>
+    <button class="act" onclick="toggleSearch()">搜索</button>
+  </header>
+
+  <main class="content">
+
+    <div class="monthbar">
+      <button onclick="shiftMonth(-1)">‹</button>
+      <button class="month-label-btn" id="monthLabel" onclick="pickDate()">
+        <span id="monthText">—</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button onclick="shiftMonth(1)">›</button>
+    </div>
+
+    <div class="searchbox" id="searchBox">
+      <input id="searchInput" type="text" placeholder="搜索账单名称或分类" oninput="render()">
+    </div>
+
+    <div class="filtr" id="filtr"></div>
+    <div id="list"></div>
+    <div style="height:6px"></div>
+
+  </main>
+
+  <nav class="tabbar">
+    <a class="tab" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"/></svg>记账
+    </a>
+    <a class="tab active" href="records.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>账单
+    </a>
+    <div class="tab fab-slot" id="fabSlot"></div>
+    <a class="tab" href="stats.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10M12 20V4M6 20v-6"/></svg>统计
+    </a>
+    <a class="tab" href="mine.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>我的
+    </a>
+  </nav>
+
+  <div class="sheet-mask" id="mask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="handle"></div>
+    <h3 id="s-name">—</h3>
+    <div class="s-sub" id="s-sub">—</div>
+    <div class="kv"><span>金额</span><b id="s-amount">—</b></div>
+    <div class="kv"><span>类型</span><b id="s-type">—</b></div>
+    <div class="kv"><span>分类</span><b id="s-cat">—</b></div>
+    <div class="kv"><span>日期</span><b id="s-date">—</b></div>
+    <div class="btns">
+      <button class="btn-danger" onclick="delCurrent()">删除</button>
+      <button class="btn-ghost" onclick="closeSheet()">关闭</button>
+    </div>
+  </div>
+
+  <!-- 修改账单 -->
+  <div class="sheet-mask" id="editMask" onclick="closeEdit()"></div>
+  <div class="sheet" id="editSheet">
+    <div class="handle"></div>
+    <h3>修改账单</h3>
+    <div class="s-sub">改完点保存</div>
+
+    <div class="field">
+      <label>名称</label>
+      <input id="edName" type="text" maxlength="20" placeholder="例如：午餐">
+    </div>
+
+    <div class="field">
+      <label>金额</label>
+      <input id="edAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+    </div>
+
+    <div class="field">
+      <label>类型</label>
+      <div class="seg" style="margin:0">
+        <button id="edTypeExpense" onclick="setEditType('expense')">支出</button>
+        <button id="edTypeIncome" onclick="setEditType('income')">收入</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>分类</label>
+      <select id="edCat" class="ed-select"></select>
+    </div>
+
+    <div class="field">
+      <label>日期</label>
+      <button class="month-label-btn" onclick="pickEditDate()"
+        style="width:100%;justify-content:space-between;background:#F4F5F7;padding:13px 14px;border-radius:12px;font-size:15px">
+        <span id="edDateText">—</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+          <rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 2.5v4M16 2.5v4"/></svg>
+      </button>
+    </div>
+
+    <div class="btns">
+      <button class="btn-ghost" onclick="closeEdit()">取消</button>
+      <button class="btn-primary" style="flex:1" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="pwa.js"></script>
+  <script src="store.js"></script>
+<script src="icons.js"></script>
+<script src="feedback.js"></script>
+<script src="quick.js"></script>
+<script src="calendar.js"></script>
+<script src="lock.js"></script>
+<script>
+var curMonth = Store.thisMonth();
+var curDay = "";
+var curFilter = "all";
+var currentId = null;
+var OPEN_W = 136;
+
+/* ===== 月份 ===== */
+function shiftMonth(d){
+  curDay = "";
+  curMonth = shift(curMonth, d);
+  render();
+}
+function pickDate(){
+  CalendarPicker.open({
+    mode: "date",
+    value: curDay || (curMonth + "-01"),
+    onPick: function(v){
+      curDay = v;
+      curMonth = v.slice(0, 7);
+      render();
+    }
+  });
+}
+function shift(m, delta){
+  var p = m.split("-");
+  var d2 = new Date(+p[0], +p[1] - 1 + delta, 1);
+  return d2.getFullYear() + "-" + String(d2.getMonth() + 1).padStart(2, "0");
+}
+
+/* ===== 筛选条 ===== */
+function renderFilter(){
+  var cats = Store.visibleCats("expense").slice(0, 6);
+  var html = '<button class="chip' + (curFilter === "all" ? " active" : "") + '" onclick="setFilter(\'all\',this)">全部</button>';
+  html += '<button class="chip' + (curFilter === "expense" ? " active" : "") + '" onclick="setFilter(\'expense\',this)">支出</button>';
+  html += '<button class="chip' + (curFilter === "income" ? " active" : "") + '" onclick="setFilter(\'income\',this)">收入</button>';
+  html += cats.map(function(c){
+    return '<button class="chip' + (curFilter === c.id ? " active" : "") + '" onclick="setFilter(\'' + c.id + '\',this)">' + c.name + '</button>';
+  }).join("");
+  document.getElementById("filtr").innerHTML = html;
+}
+function setFilter(f){ curFilter = f; closeAllSwipes(); renderFilter(); render(); }
+
+/* ===== 列表 ===== */
+function render(){
+  var labelEl = document.getElementById("monthText");
+  if(labelEl){
+    labelEl.textContent = curDay
+      ? (parseInt(curDay.slice(5,7),10) + "月" + parseInt(curDay.slice(8,10),10) + "日")
+      : (curMonth.split("-")[0] + "年" + parseInt(curMonth.slice(5,7),10) + "月");
+  }
+
+  var kw = (document.getElementById("searchInput") || {}).value || "";
+  kw = kw.trim();
+
+  var list = Store.byMonth(curMonth).filter(function(r){
+    if(curDay && r.date !== curDay) return false;
+    if(curFilter === "expense" && r.type === "income") return false;
+    if(curFilter === "income" && r.type !== "income") return false;
+    if(curFilter !== "all" && curFilter !== "expense" && curFilter !== "income" && r.cat !== curFilter) return false;
+    if(kw){
+      var hay = (r.name + " " + Store.catName(r.cat)).toLowerCase();
+      if(hay.indexOf(kw.toLowerCase()) < 0) return false;
+    }
+    return true;
+  }).sort(function(a, b){
+    return (b.date + b.time).localeCompare(a.date + a.time);
+  });
+
+  if(!list.length){
+    document.getElementById("list").innerHTML =
+      '<div class="empty">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/>' +
+        '<path d="M3.5 9.5h17M8 2.5v4M16 2.5v4"/>' +
+        '<path d="M8.5 14h.01M12 14h.01M15.5 14h.01"/></svg>' +
+        '<div class="t">' + (kw ? "没有匹配的账单" : "这个月还没有账单") + '</div>' +
+        '<div class="s">' + (kw ? "换个关键词试试" : "点下方 ＋ 记一笔") + '</div>' +
+      '</div>';
+    return;
+  }
+
+  /* 按天分组 */
+  var groups = {};
+  var order = [];
+  list.forEach(function(r){
+    if(!groups[r.date]){ groups[r.date] = []; order.push(r.date); }
+    groups[r.date].push(r);
+  });
+
+  var html = "";
+  order.forEach(function(date){
+    var items = groups[date];
+    var outSum = 0, inSum = 0;
+    items.forEach(function(r){
+      if(r.type === "income") inSum += r.amount; else outSum += r.amount;
+    });
+    var sumTxt = (outSum ? "支出 ¥" + Store.fmt(outSum) : "") +
+                 (outSum && inSum ? " · " : "") +
+                 (inSum ? "收入 ¥" + Store.fmt(inSum) : "");
+
+    html += '<div class="day-head"><b>' + Store.dayLabel(date) + '</b>' +
+            '<span class="day-sum">' + sumTxt + '</span></div>';
+
+    items.forEach(function(r){
+      var out = r.type !== "income";
+      html += '<div class="swipe">' +
+        '<div class="acts">' +
+          '<button class="act-edit" onclick="editRecord(event,\'' + r.id + '\')">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+            'stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16v4z"/></svg>修改</button>' +
+          '<button class="act-del" onclick="delRecord(event,\'' + r.id + '\')">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+            'stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>' +
+            '<path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/></svg>删除</button>' +
+        '</div>' +
+        '<div class="record" onclick="onRowClick(event,\'' + r.id + '\')">' +
+          '<div class="ico ' + (out ? "out" : "in") + '">' + svgIcon(Store.catIcon(r.cat)) + '</div>' +
+          '<div class="mid"><div class="name">' + escapeHTML(r.name) + '</div>' +
+          '<div class="sub">' + Store.catName(r.cat) + ' · ' + r.time + '</div></div>' +
+          '<div class="amt ' + (out ? "out" : "in") + '">' + (out ? "−" : "+") + Store.fmt(r.amount) + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  });
+  document.getElementById("list").innerHTML = html;
+}
+
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+  });
+}
+
+/* ===== 搜索 ===== */
+function toggleSearch(){
+  var box = document.getElementById("searchBox");
+  box.classList.toggle("show");
+  if(box.classList.contains("show")) document.getElementById("searchInput").focus();
+  else { document.getElementById("searchInput").value = ""; render(); }
+}
+
+/* ===== 详情 / 删除 ===== */
+function onRowClick(ev, id){
+  var sw = ev.currentTarget.closest(".swipe");
+  if(sw && (sw.classList.contains("open") || sw.dataset.moved === "1")){
+    sw.dataset.moved = "0";
+    return;
+  }
+  openDetail(id);
+}
+function openDetail(id){
+  var r = Store.all().find(function(x){ return x.id === id; });
+  if(!r) return;
+  currentId = id;
+  document.getElementById("s-name").textContent = r.name;
+  document.getElementById("s-sub").textContent = Store.catName(r.cat);
+  document.getElementById("s-amount").textContent = (r.type === "income" ? "+" : "−") + Store.fmt(r.amount);
+  document.getElementById("s-type").textContent = r.type === "income" ? "收入" : "支出";
+  document.getElementById("s-cat").textContent = Store.catName(r.cat);
+  document.getElementById("s-date").textContent = r.date + " " + r.time;
+  document.getElementById("mask").classList.add("show");
+  document.getElementById("sheet").classList.add("show");
+}
+function closeSheet(){
+  document.getElementById("mask").classList.remove("show");
+  document.getElementById("sheet").classList.remove("show");
+}
+function delCurrent(){
+  if(!currentId) return;
+  if(!confirm("删除这笔账单？")) return;
+  Store.remove(currentId);
+  closeSheet();
+  toast("已删除", { sound: "remove" });
+  render();
+}
+function delRecord(ev, id){
+  ev.stopPropagation();
+  var sw = ev.currentTarget.closest(".swipe");
+  if(sw){ sw.style.transition = "opacity .18s"; sw.style.opacity = "0"; }
+  setTimeout(function(){
+    Store.remove(id);
+    if(sw) sw.remove();
+    toast("已删除", { sound: "remove" });
+    render();
+  }, 180);
+}
+
+/* ===== 修改账单 ===== */
+var editingId = null;
+var editType = "expense";
+var editDate = "";
+
+function editRecord(ev, id){
+  ev.stopPropagation();
+  var r = Store.all().find(function(x){ return x.id === id; });
+  if(!r) return;
+  editingId = id;
+  editType = r.type || "expense";
+  editDate = r.date;
+
+  document.getElementById("edName").value = r.name;
+  document.getElementById("edAmount").value = r.amount;
+  document.getElementById("edDateText").textContent = r.date;
+
+  setEditType(editType, r.cat);
+  document.getElementById("editMask").classList.add("show");
+  document.getElementById("editSheet").classList.add("show");
+}
+
+function setEditType(type, keepCat){
+  editType = type;
+  document.getElementById("edTypeExpense").classList.toggle("on", type === "expense");
+  document.getElementById("edTypeIncome").classList.toggle("on", type === "income");
+
+  var list = Store.visibleCats(type);
+  var sel = document.getElementById("edCat");
+  sel.innerHTML = list.map(function(c){
+    return '<option value="' + c.id + '">' + c.name + '</option>';
+  }).join("");
+  if(keepCat && list.some(function(c){ return c.id === keepCat; })) sel.value = keepCat;
+}
+
+function pickEditDate(){
+  CalendarPicker.open({
+    mode: "date",
+    value: editDate,
+    onPick: function(v){
+      editDate = v;
+      document.getElementById("edDateText").textContent = v;
+    }
+  });
+}
+
+function closeEdit(){
+  document.getElementById("editMask").classList.remove("show");
+  document.getElementById("editSheet").classList.remove("show");
+}
+
+function saveEdit(){
+  var name = document.getElementById("edName").value.trim();
+  var amt = Number(document.getElementById("edAmount").value);
+  var cat = document.getElementById("edCat").value;
+
+  if(!name){ toast("名称不能为空"); return; }
+  if(!isFinite(amt) || amt <= 0){ toast("金额要大于 0"); return; }
+
+  Store.update(editingId, {
+    name: name,
+    amount: amt,
+    cat: cat,
+    type: editType,
+    date: editDate
+  });
+  closeEdit();
+  toast("已修改", { sound: "success" });
+  render();
+  renderFilter();
+}
+/* ===== 左滑 ===== */
+var sw_startX = 0, sw_startY = 0, sw_baseW = 0, sw_startW = 0;
+var sw_dragging = false, sw_decided = false, sw_horiz = false;
+var sw_el = null, sw_rec = null;
+
+function closeAllSwipes(except){
+  document.querySelectorAll(".swipe.open").forEach(function(s){
+    if(s !== except){
+      s.classList.remove("open");
+      var r = s.querySelector(".record");
+      if(r) r.style.width = "";
+    }
+  });
+}
+
+document.addEventListener("touchstart", swDown, { passive: true });
+document.addEventListener("touchmove", swMove, { passive: false });
+document.addEventListener("touchend", swUp);
+document.addEventListener("mousedown", swDown);
+document.addEventListener("mousemove", swMove);
+document.addEventListener("mouseup", swUp);
+
+function swDown(e){
+  var rec = e.target.closest && e.target.closest(".swipe .record");
+  if(!rec) return;
+  sw_el = rec.closest(".swipe"); sw_rec = rec;
+  var p = e.touches ? e.touches[0] : e;
+  sw_startX = p.clientX; sw_startY = p.clientY;
+  sw_baseW = sw_el.offsetWidth;
+  sw_startW = sw_el.classList.contains("open") ? sw_baseW - OPEN_W : sw_baseW;
+  sw_dragging = true; sw_decided = false; sw_horiz = false;
+  sw_el.dataset.moved = "0";
+}
+function swMove(e){
+  if(!sw_dragging || !sw_el) return;
+  var p = e.touches ? e.touches[0] : e;
+  var dx = p.clientX - sw_startX, dy = p.clientY - sw_startY;
+  if(!sw_decided){
+    if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+    sw_decided = true;
+    sw_horiz = Math.abs(dx) > Math.abs(dy);
+    if(sw_horiz){ sw_el.classList.add("dragging"); closeAllSwipes(sw_el); }
+    else { sw_dragging = false; return; }
+  }
+  if(!sw_horiz) return;
+  if(e.cancelable) e.preventDefault();
+  var w = Math.max(sw_baseW - OPEN_W, Math.min(sw_baseW, sw_startW + dx));
+  sw_rec.style.width = w + "px";
+  if(Math.abs(dx) > 8) sw_el.dataset.moved = "1";
+}
+function swUp(){
+  if(!sw_dragging || !sw_el || !sw_horiz){ sw_dragging = false; return; }
+  sw_dragging = false;
+  sw_el.classList.remove("dragging");
+  var w = sw_rec.offsetWidth;
+  sw_rec.style.width = "";
+  if(w < sw_baseW - OPEN_W / 2) sw_el.classList.add("open");
+  else sw_el.classList.remove("open");
+}
+
+/* ===== 启动 ===== */
+renderFilter();
+render();
+</script>
+</body>
+</html>

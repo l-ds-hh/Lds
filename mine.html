@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>我的 · 简账</title>
+<script src="theme.js"></script>
+<script src="accent.js"></script>
+<meta name="theme-color" content="#4C6FFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="简账">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="lock.css">
+<link rel="stylesheet" href="calendar.css">
+<link rel="stylesheet" href="extra.css">
+<style>
+  .mi svg{width:17px;height:17px;stroke-width:1.9}
+  .mi.t-blue{background:#EDF1FF;color:#4C6FFF}
+  .mi.t-orange{background:#FFF3E6;color:#F79009}
+  .mi.t-pink{background:#FEECF3;color:#EE5D8C}
+  .mi.t-green{background:#E9F7EF;color:#0FA958}
+  .mi.t-purple{background:#F1EFFE;color:#7C6CF5}
+  .mi.t-gray{background:#F1F2F5;color:#8A909C}
+  .mi.t-red{background:#FEF0EF;color:#F04438}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero"></div>
+
+  <header class="topbar">
+    <div class="title">我的</div>
+    <button class="act" onclick="openProfile()">编辑</button>
+  </header>
+
+  <main class="content">
+
+    <!-- 个人资料 -->
+    <div class="profile" onclick="openProfile()">
+      <div class="avatar g1" id="avatar">简</div>
+      <div style="flex:1;min-width:0">
+        <div class="n" id="nickname">我的简账</div>
+        <div class="s" id="signature">—</div>
+      </div>
+      <div class="arw">›</div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="it"><b id="statMonth">0</b><span>本月笔数</span></div>
+      <div class="it"><b id="statDays">0</b><span>记账天数</span></div>
+      <div class="it"><b id="statAll">0</b><span>累计笔数</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>账务</h2></div>
+      <div class="menu">
+        <div class="menu-item" onclick="openBudget()">
+          <div class="mi t-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div class="mt">预算管理</div>
+          <div class="mv" id="budgetTip">未设置</div>
+          <div class="arw">›</div>
+        </div>
+        <div class="menu-item" onclick="openReport()">
+          <div class="mi t-orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+          </div>
+          <div class="mt">月度报表</div><div class="arw">›</div>
+        </div>
+        <div class="menu-item" onclick="openCats()">
+          <div class="mi t-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/>
+              <circle cx="7.5" cy="7.5" r="1.2"/></svg>
+          </div>
+          <div class="mt">分类管理</div>
+          <div class="mv" id="catTip">—</div>
+          <div class="arw">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>数据</h2></div>
+      <div class="menu">
+        <div class="menu-item" onclick="openBackup()">
+          <div class="mi t-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>
+              <path d="M12 8v4l3 2"/></svg>
+          </div>
+          <div class="mt">备份与恢复</div>
+          <div class="mv" id="backupTip">—</div>
+          <div class="arw">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>设置</h2></div>
+      <div class="menu">
+        <div class="menu-item" onclick="openAccent()">
+          <div class="mi t-pink">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 3a9 9 0 0 1 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9z"/></svg>
+          </div>
+          <div class="mt">主题色</div>
+          <div class="mv" id="accentTip">靛蓝</div>
+          <div class="arw">›</div>
+        </div>        <div class="menu-item" onclick="toggleTheme()">
+          <div class="mi t-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg>
+          </div>
+          <div class="mt">深色模式</div>
+          <div class="mv" id="themeState">跟随系统</div>
+          <div class="switch" id="themeSwitch"><i></i></div>
+        </div>
+        <div class="menu-item" onclick="cycleHaptic()">
+          <div class="mi t-orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="4" width="8" height="16" rx="2.2"/><path d="M4.6 9v6M19.4 9v6"/></svg>
+          </div>
+          <div class="mt">震动反馈</div>
+          <div class="mv" id="hapticState">已开启</div>
+          <div class="switch on" id="hapticSwitch"><i></i></div>
+        </div>
+        <div class="menu-item" onclick="cycleSound()">
+          <div class="mi t-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 9.5v5h3.2L12 18V6L7.2 9.5H4z"/>
+              <path d="M15.4 9.2a4 4 0 0 1 0 5.6"/><path d="M18 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>
+          </div>
+          <div class="mt">记账提示音</div>
+          <div class="mv" id="soundState">已开启</div>
+          <div class="switch on" id="soundSwitch"><i></i></div>
+        </div>
+        <div class="menu-item" onclick="openLock()">
+          <div class="mi t-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          </div>
+          <div class="mt">应用锁</div>
+          <div class="mv" id="lockTip">未开启</div>
+          <div class="arw">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>其他</h2></div>
+      <div class="menu">
+        <div class="menu-item" onclick="openAbout()">
+          <div class="mi t-gray">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+          </div>
+          <div class="mt">关于简账</div><div class="mv" id="verTip">v2.1.0</div><div class="arw">›</div>
+        </div>
+        <div class="menu-item" onclick="confirmClear()">
+          <div class="mi t-red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/></svg>
+          </div>
+          <div class="mt" style="color:var(--expense)">清空所有账单</div>
+          <div class="arw">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ver">
+      简账 v2.1.0 · build 5<br>
+      <span style="opacity:.7">数据保存在本机，不联网</span>
+    </div>
+
+  </main>
+
+  <nav class="tabbar">
+    <a class="tab" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"/></svg>记账
+    </a>
+    <a class="tab" href="records.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>账单
+    </a>
+    <div class="tab fab-slot" id="fabSlot"></div>
+    <a class="tab" href="stats.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10M12 20V4M6 20v-6"/></svg>统计
+    </a>
+    <a class="tab active" href="mine.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>我的
+    </a>
+  </nav>
+
+  <!-- ===== 通用弹层容器 ===== -->
+  <div class="sheet-mask" id="mask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="handle"></div>
+    <div id="sheetBody"></div>
+  </div>
+
+  <!-- 个人资料 -->
+  <div class="sheet-mask" id="pMask" onclick="closeProfile()"></div>
+  <div class="sheet" id="pSheet">
+    <div class="handle"></div>
+    <h3>个人资料</h3>
+    <div class="s-sub">头像和昵称只保存在本机，不会上传</div>
+    <div class="field">
+      <label>昵称</label>
+      <input id="nickInput" type="text" maxlength="12" placeholder="给自己起个名字">
+    </div>
+    <div class="field">
+      <label>头像</label>
+      <div class="avatar-grid" id="avatarGrid"></div>
+      <div class="s-sub" style="margin:10px 0 0">点第一个虚线框从相册选照片；选右侧预设会替换掉照片。</div>
+    </div>
+    <div class="btns">
+      <button class="btn-ghost" onclick="closeProfile()">取消</button>
+      <button class="btn-primary" style="flex:1" onclick="saveProfile()">保存</button>
+    </div>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" style="display:none">
+  <input type="file" id="importInput" accept=".json,application/json" style="display:none">
+
+</div>
+
+<script src="pwa.js"></script>
+  <script src="store.js"></script>
+<script src="icons.js"></script>
+<script src="feedback.js"></script>
+<script src="quick.js"></script>
+<script src="calendar.js"></script>
+<script src="lock.js"></script>
+<script>
+/* ========== 通用弹层 ========== */
+function openSheet(html){
+  document.getElementById("sheetBody").innerHTML = html;
+  document.getElementById("mask").classList.add("show");
+  document.getElementById("sheet").classList.add("show");
+}
+function closeSheet(){
+  document.getElementById("mask").classList.remove("show");
+  document.getElementById("sheet").classList.remove("show");
+}
+function refresh(){
+  var m = Store.thisMonth();
+  var s = Store.summary(m);
+  document.getElementById("signature").textContent = "";
+  document.getElementById("statMonth").textContent = s.count;
+  var days = {};
+  Store.byMonth(m).forEach(function(r){ days[r.date] = 1; });
+  document.getElementById("statDays").textContent = Object.keys(days).length;
+  document.getElementById("statAll").textContent = Store.all().length;
+
+  var st = Store.settings();
+  var tip = "未设置";
+  if (st.budget > 0){
+    var p = Math.round(s.expense / st.budget * 100);
+    tip = "已用 " + p + "%";
+  }
+  document.getElementById("budgetTip").textContent = tip;
+
+  var vis = Store.visibleCats().length, all = Store.cats().length;
+  document.getElementById("catTip").textContent = vis + "/" + all + " 项显示";
+  document.getElementById("backupTip").textContent = Store.snapshots().length + " 份快照";
+  document.getElementById("lockTip").textContent = st.lockEnabled ? "已开启" : "未开启";
+
+  var nick = (profile && profile.nick) || "我的简账";
+  document.getElementById("nickname").textContent = nick;
+  document.getElementById("signature").textContent =
+    "本月支出 ¥" + Store.fmt(s.expense) + " · 结余 ¥" + Store.fmt(s.balance);
+}
+
+/* ========== 预算 ========== */
+function openBudget(){
+  var st = Store.settings();
+  var s = Store.summary(Store.thisMonth());
+  var budget = st.budget || 0;
+  var pct = budget > 0 ? Math.min(100, s.expense / budget * 100) : 0;
+  var over = budget > 0 && s.expense > budget;
+
+  openSheet(
+    '<h3>预算管理</h3>' +
+    '<div class="s-sub">设置本月支出上限，超出会在记账时提醒</div>' +
+    '<div class="field">' +
+      '<label>本月总预算（元）</label>' +
+      '<input id="budgetInput" type="number" inputmode="decimal" min="0" placeholder="例如 5000" value="' + (budget > 0 ? budget : "") + '">' +
+    '</div>' +
+    (budget > 0 ?
+      '<div style="margin-top:18px">' +
+        '<div class="bar-top"><span>本月已支出</span><b>¥' + Store.fmt(s.expense) + ' / ' + Store.fmt(budget) + '</b></div>' +
+        '<div class="track" style="margin-top:8px"><i style="width:' + pct + '%;background:' + (over ? "#F04438" : "var(--primary)") + '"></i></div>' +
+        '<div style="font-size:12.5px;color:' + (over ? "var(--expense)" : "var(--text-3)") + ';margin-top:8px">' +
+          (over ? "已超出 ¥" + Store.fmt(s.expense - budget) : "还剩 ¥" + Store.fmt(budget - s.expense)) +
+        '</div>' +
+      '</div>' : "") +
+    '<div class="btns">' +
+      '<button class="btn-ghost" onclick="closeSheet()">取消</button>' +
+      '<button class="btn-primary" style="flex:1" onclick="saveBudget()">保存</button>' +
+    '</div>'
+  );
+}
+function saveBudget(){
+  var v = document.getElementById("budgetInput").value;
+  Store.setBudget(v === "" ? 0 : Math.max(0, Number(v)));
+  closeSheet(); refresh();
+  toast("预算已保存");
+}
+
+/* ========== 月度报表 ========== */
+var reportMonth = Store.thisMonth();
+
+function openReport(){
+  reportMonth = Store.thisMonth();
+  openSheet(
+    '<h3>月度报表</h3>' +
+    '<div class="s-sub">点月份可以选任意年月</div>' +
+    '<div class="field"><label>报表月份</label>' +
+      '<button class="month-label-btn" onclick="pickReportMonth()" ' +
+      'style="width:100%;justify-content:space-between;background:#F4F5F7;padding:13px 14px;border-radius:12px;font-size:15px">' +
+        '<span id="reportMonthText">' + Store.monthLabel(reportMonth) + '</span>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</button>' +
+    '</div>' +
+    '<div id="reportBody" style="margin-top:16px"></div>' +
+    '<div class="btns"><button class="btn-primary" style="flex:1" onclick="closeSheet()">关闭</button></div>'
+  );
+  genReport();
+}
+
+function pickReportMonth(){
+  CalendarPicker.open({
+    mode: "month",
+    value: reportMonth + "-01",
+    onPick: function(v){
+      reportMonth = v.slice(0, 7);
+      var el = document.getElementById("reportMonthText");
+      if(el) el.textContent = Store.monthLabel(reportMonth);
+      genReport();
+    }
+  });
+}
+
+function genReport(){
+  var m = reportMonth;
+  var s = Store.summary(m);
+  var cats = Store.byCategory(m, "expense");
+  var max = cats.length ? cats[0].amount : 0;
+  var prev = Store.summary(shiftMonth(m, -1));
+  var diff = s.expense - prev.expense;
+
+  var html =
+    '<div class="report-box">' +
+      '<div class="rrow"><span>收入</span><b class="in">¥' + Store.fmt(s.income) + '</b></div>' +
+      '<div class="rrow"><span>支出</span><b class="out">¥' + Store.fmt(s.expense) + '</b></div>' +
+      '<div class="rrow"><span>结余</span><b>¥' + Store.fmt(s.balance) + '</b></div>' +
+      '<div class="rrow"><span>笔数</span><b>' + s.count + ' 笔</b></div>' +
+      '<div class="rrow"><span>环比上月</span><b class="' + (diff > 0 ? "out" : "in") + '">' +
+        (diff > 0 ? "增加 ¥" + Store.fmt(diff) : diff < 0 ? "减少 ¥" + Store.fmt(Math.abs(diff)) : "持平") +
+      '</b></div>' +
+    '</div>';
+
+  if(cats.length){
+    html += '<div class="s-sub" style="margin:16px 0 8px">支出构成</div>';
+    html += cats.map(function(c){
+      var w = max ? (c.amount / max * 100) : 0;
+      return '<div style="margin-bottom:10px">' +
+        '<div class="bar-top"><span>' + c.name + '</span><b>¥' + Store.fmt(c.amount) + '</b></div>' +
+        '<div class="track" style="margin-top:5px"><i style="width:' + w + '%"></i></div>' +
+      '</div>';
+    }).join("");
+  } else {
+    html += '<div class="s-sub" style="margin-top:16px">这个月还没有支出记录</div>';
+  }
+  var box = document.getElementById("reportBody");
+  if(box) box.innerHTML = html;
+}
+function shiftMonth(m, delta){
+  var p = m.split("-");
+  var d = new Date(+p[0], +p[1] - 1 + delta, 1);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+
+/* ========== 分类管理 ========== */
+var catTab = "expense";
+function openCats(){
+  catTab = "expense";
+  renderCatsSheet();
+}
+function renderCatsSheet(){
+  var list = Store.cats(catTab);
+  var html =
+    '<h3>分类管理</h3>' +
+    '<div class="s-sub">关掉不用的分类；也可以自己添加</div>' +
+    '<div class="seg" style="margin:16px 0 12px">' +
+      '<button class="' + (catTab === "expense" ? "on" : "") + '" onclick="switchCatTab(\'expense\')">支出</button>' +
+      '<button class="' + (catTab === "income" ? "on" : "") + '" onclick="switchCatTab(\'income\')">收入</button>' +
+    '</div>' +
+    '<div class="cat-manage">' +
+      list.map(function(c){
+        return '<div class="cm-row">' +
+          '<span class="cm-ico">' + svgIcon(c.icon) + '</span>' +
+          '<span class="cm-name">' + c.name + (c.custom ? '<em>自定义</em>' : '') + '</span>' +
+          (c.custom ? '<button class="cm-del" onclick="delCat(\'' + c.id + '\')">删除</button>' : '') +
+          '<span class="switch ' + (c.hidden ? "" : "on") + ' sm" onclick="toggleCat(\'' + c.id + '\')"><i></i></span>' +
+        '</div>';
+      }).join("") +
+    '</div>' +
+    '<div class="field" style="margin-top:20px">' +
+      '<label>添加自定义分类</label>' +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+        '<span class="cm-ico" id="newCatIcon" style="width:42px;height:42px;border-radius:14px;background:#F4F5F7;display:grid;place-items:center;color:#8A909C;flex-shrink:0">' + svgIcon("other") + '</span>' +
+        '<input id="newCatName" type="text" maxlength="6" placeholder="例如：咖啡、宠物、订阅" oninput="previewNewIcon()" style="flex:1">' +
+      '</div>' +
+    '</div>' +
+    '<div class="btns">' +
+      '<button class="btn-ghost" onclick="closeSheet()">关闭</button>' +
+      '<button class="btn-primary" style="flex:1" onclick="addCat()">添加</button>' +
+    '</div>';
+  openSheet(html);
+}
+function switchCatTab(t){
+  catTab = t;
+  renderCatsSheet();
+}
+function toggleCat(id){
+  var c = Store.cat(id);
+  Store.setCatHidden(id, !c.hidden);
+  renderCatsSheet(); refresh();
+}
+function delCat(id){
+  var c = Store.cat(id);
+  if(!confirm("删除分类「" + c.name + "」？\n\n该分类下的账单会归到「其他」")) return;
+  Store.removeCat(id);
+  renderCatsSheet(); refresh();
+  toast("已删除分类");
+}
+function previewNewIcon(){
+  var v = document.getElementById("newCatName").value.trim();
+  var icon = v ? Store.guessIcon(v, catTab) : "other";
+  document.getElementById("newCatIcon").innerHTML = svgIcon(icon);
+}
+function addCat(){
+  var el = document.getElementById("newCatName");
+  var name = el.value.trim();
+  var res = Store.addCat(name, catTab);
+  if(!res.ok){ toast(res.msg); return; }
+  toast("已添加分类：「" + name + "」");
+  renderCatsSheet(); refresh();
+  el.value = "";
+}
+
+/* ========== 备份与恢复 ========== */
+function openBackup(){
+  var snaps = Store.snapshots();
+  var html =
+    '<h3>备份与恢复</h3>' +
+    '<div class="s-sub">导出成文件存到网盘或微信；换手机时再导回来</div>' +
+    '<div class="btns" style="margin-top:18px">' +
+      '<button class="btn-ghost" style="flex:1" onclick="exportBackup()">导出备份</button>' +
+      '<button class="btn-ghost" style="flex:1" onclick="pickImport()">导入备份</button>' +
+    '</div>' +
+    '<div class="s-sub" style="margin:22px 0 8px">历史快照（自动保留最近 7 份）</div>' +
+    (snaps.length ?
+      '<div class="snap-list">' + snaps.map(function(s, i){
+        return '<div class="snap-row">' +
+          '<div class="snap-info">' +
+            '<div class="snap-t">' + fmtTime(s.at) + '</div>' +
+            '<div class="snap-s">' + (s.records.length) + ' 笔' + (s.note ? ' · ' + s.note : '') + '</div>' +
+          '</div>' +
+          '<button class="cm-del" onclick="restoreSnap(' + s.at + ')">恢复</button>' +
+        '</div>';
+      }).join("") + '</div>'
+      : '<div class="empty" style="padding:28px 0"><div class="t">还没有快照</div><div class="s">每次导出、导入、清空前会自动存一份</div></div>') +
+    '<div class="btns"><button class="btn-primary" style="flex:1" onclick="closeSheet()">关闭</button></div>';
+  openSheet(html);
+}
+function fmtTime(t){
+  var d = new Date(t);
+  var p = function(n){ return String(n).padStart(2, "0"); };
+  return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function exportBackup(){
+  Store.snapshot("导出前备份");
+  var data = Store.exportData();
+  var text = JSON.stringify(data, null, 2);
+  var fname = "简账备份_" + Store.today() + ".json";
+  var blob = new Blob([text], { type: "application/json" });
+  var file = null;
+  try { file = new File([blob], fname, { type: "application/json" }); } catch(e) {}
+
+  /* 手机优先用系统分享：可以直接发微信、存到「文件」或网盘 */
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: "简账备份" })
+      .then(function(){ toast("备份已通过分享发出"); })
+      .catch(function(){ saveFileFallback(blob, fname); });
+    return;
+  }
+  saveFileFallback(blob, fname);
+}
+function saveFileFallback(blob, fname){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+
+  if (typeof isIOS === "function" && isIOS()) {
+    toast("已在浏览器中打开，请点「存储到文件」");
+  } else {
+    toast("备份文件已保存到下载目录");
+  }
+  refresh();
+}
+function pickImport(){ document.getElementById("importInput").click(); }
+document.getElementById("importInput").addEventListener("change", function(){
+  var f = this.files[0];
+  this.value = "";
+  if(!f) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var obj = JSON.parse(reader.result);
+      if(!confirm("导入会替换当前全部账单，确定继续吗？")) return;
+      var res = Store.importData(obj);
+      if(!res.ok){ toast(res.msg); return; }
+      toast("已导入 " + res.count + " 笔账单");
+      closeSheet(); refresh();
+      setTimeout(function(){ location.reload(); }, 700);
+    }catch(e){ toast("文件读不出来，请确认是简账导出的 .json"); }
+  };
+  reader.readAsText(f);
+});
+function restoreSnap(at){
+  if(!confirm("恢复到这份快照？\n\n当前数据会先自动存一份快照。")) return;
+  Store.restoreSnapshot(at);
+  toast("已恢复");
+  closeSheet(); refresh();
+  setTimeout(function(){ location.reload(); }, 700);
+}
+
+/* ========== 应用锁 ========== */
+function openLock(){
+  var st = Store.settings();
+  var on = st.lockEnabled;
+  var html =
+    '<h3>应用锁</h3>' +
+    '<div class="s-sub">每次打开简账需要输入 4 位数字</div>' +
+    '<div class="menu" style="margin-top:16px">' +
+      '<div class="menu-item" style="padding-left:0;padding-right:0;border:0">' +
+        '<div class="mt">启用应用锁</div>' +
+        '<span class="switch ' + (on ? "on" : "") + '" id="lockSwitch" onclick="toggleLock()"><i></i></span>' +
+      '</div>' +
+    '</div>' +
+    (on ?
+      '<div class="field"><label>修改密码</label>' +
+        '<input id="pinNew" type="password" inputmode="numeric" maxlength="4" placeholder="新的 4 位数字">' +
+      '</div>' +
+      '<div class="field"><label>再输一次</label>' +
+        '<input id="pinNew2" type="password" inputmode="numeric" maxlength="4" placeholder="重复输入">' +
+      '</div>'
+      :
+      '<div class="field"><label>设置密码</label>' +
+        '<input id="pinNew" type="password" inputmode="numeric" maxlength="4" placeholder="4 位数字">' +
+      '</div>' +
+      '<div class="field"><label>再输一次</label>' +
+        '<input id="pinNew2" type="password" inputmode="numeric" maxlength="4" placeholder="重复输入">' +
+      '</div>') +
+    '<div class="note">忘记密码只能清空账单重置。预设问题：密码存在本机，只防别人翻手机，不防换机或重装。</div>' +
+    '<div class="btns">' +
+      '<button class="btn-ghost" onclick="closeSheet()">关闭</button>' +
+      '<button class="btn-primary" style="flex:1" onclick="savePin()">' + (on ? "修改密码" : "开启应用锁") + '</button>' +
+    '</div>';
+  openSheet(html);
+}
+function toggleLock(){
+  var st = Store.settings();
+  if(st.lockEnabled){
+    if(!confirm("关闭应用锁？之后打开简账不再需要密码。")) return;
+    Store.clearPin();
+    toast("已关闭应用锁");
+  } else {
+    toast("请设置 4 位密码");
+  }
+  refresh(); openLock();
+}
+function savePin(){
+  var st = Store.settings();
+  if(!st.lockEnabled){
+    var a = document.getElementById("pinNew").value.trim();
+    var b = document.getElementById("pinNew2").value.trim();
+    if(!/^\d{4}$/.test(a)){ toast("请输入 4 位数字"); return; }
+    if(a !== b){ toast("两次输入不一致"); return; }
+    Store.setPin(a);
+    toast("应用锁已开启");
+    closeSheet(); refresh();
+    return;
+  }
+  var a2 = document.getElementById("pinNew").value.trim();
+  var b2 = document.getElementById("pinNew2").value.trim();
+  if(!a2 && !b2){ toast("请输入新密码"); return; }
+  if(!/^\d{4}$/.test(a2)){ toast("请输入 4 位数字"); return; }
+  if(a2 !== b2){ toast("两次输入不一致"); return; }
+  Store.setPin(a2);
+  toast("密码已修改");
+  closeSheet(); refresh();
+}
+
+/* ========== 清空 ========== */
+function confirmClear(){
+  if(!confirm("清空所有账单？\n\n会先自动存一份快照，可以在「备份与恢复」里找回。")) return;
+  if(!confirm("再次确认：真的清空吗？")) return;
+  Store.clearAll();
+  toast("已清空账单");
+  refresh();
+  setTimeout(function(){ location.reload(); }, 700);
+}
+
+/* ========== 关于 ========== */
+function openAbout(){
+  openSheet(
+    '<div class="about-hero">' +
+      '<div class="about-logo">简</div>' +
+      '<div class="about-name">简账</div>' +
+      '<div class="about-ver">版本 2.1.0（build 5）</div>' +
+      '<div class="about-slogan">简单、离线、不联网的记账本</div>' +
+    '</div>' +
+    '<div class="menu" style="margin-top:18px">' +
+      '<div class="menu-item" onclick="checkUpdate()"><div class="mt">检查更新</div><div class="mv" id="updateState">点击检查</div><div class="arw">›</div></div>' +
+      '<div class="menu-item" onclick="toast(\'所有账单只存在本机，不联网、不上传\')"><div class="mt">隐私说明</div><div class="arw">›</div></div>' +
+      '<div class="menu-item" onclick="toast(\'本应用为个人开发，未使用第三方开源库\')"><div class="mt">开源许可</div><div class="arw">›</div></div>' +
+    '</div>' +
+    '<div class="about-foot">数据全部保存在本机<br>© 2026 简账 · 个人开发</div>' +
+    '<div class="btns"><button class="btn-ghost" style="flex:1" onclick="closeSheet()">关闭</button></div>'
+  );
+}
+function checkUpdate(){
+  var el = document.getElementById("updateState");
+  el.textContent = "检查中…";
+  setTimeout(function(){ el.textContent = "已是最新"; toast("当前已是最新版本 2.1.0"); }, 700);
+}
+
+/* ========== 个人资料 ========== */
+var PRESETS = [
+  {cls:"g1", text:"简"}, {cls:"g2", text:"简"}, {cls:"g3", text:"简"},
+  {cls:"g4", text:"简"}, {cls:"g5", text:"简"}, {cls:"g6", text:"简"},
+  {cls:"g2", text:"财"}, {cls:"g3", text:"记"}, {cls:"g4", text:"账"},
+  {cls:"g5", text:"小"}, {cls:"g6", text:"简"}
+];
+var profile = { nick:"我的简账", avatar:0, photo:null };
+var tmpAvatar = 0, tmpPhoto = null;
+
+function renderProfile(){
+  var el = document.getElementById("avatar");
+  if(profile.photo){
+    el.className = "avatar has-photo";
+    el.style.backgroundImage = "url(" + profile.photo + ")";
+    el.textContent = "";
+  } else {
+    var p = PRESETS[profile.avatar] || PRESETS[0];
+    el.className = "avatar " + p.cls;
+    el.style.backgroundImage = "";
+    el.textContent = p.text;
+  }
+  document.getElementById("nickname").textContent = profile.nick;
+}
+function renderAvatarGrid(){
+  var cells = [];
+  if(tmpPhoto){
+    cells.push('<button class="op on" onclick="removePhoto()">' +
+      '<span class="ph" style="background-image:url(' + tmpPhoto + ')"></span></button>');
+  } else {
+    cells.push('<button class="op upload" onclick="pickPhoto()">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
+      'stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v12M6 12h12"/></svg></button>');
+  }
+  cells = cells.concat(PRESETS.map(function(p, i){
+    var on = (!tmpPhoto && i === tmpAvatar) ? " on" : "";
+    return '<button class="op' + on + '" onclick="pickPreset(' + i + ')">' +
+      '<span class="avatar ' + p.cls + '" style="width:100%;height:100%;border-radius:14px;' +
+      'box-shadow:none;font-size:19px;text-indent:0">' + p.text + '</span></button>';
+  }));
+  document.getElementById("avatarGrid").innerHTML = cells.join("");
+}
+function pickPreset(i){ tmpAvatar = i; tmpPhoto = null; renderAvatarGrid(); }
+function pickPhoto(){ document.getElementById("photoInput").click(); }
+function removePhoto(){ tmpPhoto = null; renderAvatarGrid(); }
+function handlePhoto(file){
+  if(!file || !/^image\//.test(file.type)) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var S = 240, c = document.createElement("canvas");
+      c.width = S; c.height = S;
+      var ctx = c.getContext("2d");
+      var side = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - side)/2, (img.height - side)/2, side, side, 0, 0, S, S);
+      tmpPhoto = c.toDataURL("image/jpeg", 0.85);
+      renderAvatarGrid();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById("photoInput").addEventListener("change", function(){
+  handlePhoto(this.files[0]); this.value = "";
+});
+function openProfile(){
+  tmpAvatar = profile.avatar; tmpPhoto = profile.photo;
+  document.getElementById("nickInput").value = profile.nick;
+  renderAvatarGrid();
+  document.getElementById("pMask").classList.add("show");
+  document.getElementById("pSheet").classList.add("show");
+}
+function closeProfile(){
+  document.getElementById("pMask").classList.remove("show");
+  document.getElementById("pSheet").classList.remove("show");
+}
+function saveProfile(){
+  var v = document.getElementById("nickInput").value.trim();
+  if(!v){ toast("昵称不能为空"); return; }
+  profile.nick = v; profile.avatar = tmpAvatar; profile.photo = tmpPhoto;
+  renderProfile();
+  try{ localStorage.setItem("preview_profile", JSON.stringify(profile)); }catch(e){}
+  refresh();
+  closeProfile();
+}
+
+/* ========== 主题 / 反馈 ========== */
+function syncThemeUI(){
+  var st = document.getElementById("themeState");
+  var sw = document.getElementById("themeSwitch");
+  if(!st || !sw) return;
+  st.textContent = themeLabel();
+  sw.classList.toggle("on", isDarkNow());
+}
+/* ===== 主题色 ===== */
+function syncAccentTip(){
+  var el = document.getElementById("accentTip");
+  if(el) el.textContent = accentName();
+}
+function openAccent(){
+  var cur = getAccent();
+  var html =
+    '<h3>主题色</h3>' +
+    '<div class="s-sub">选一个喜欢的颜色，整个界面会跟着变</div>' +
+    '<div class="accent-grid">' +
+      ACCENTS.map(function(a){
+        var on = a.id === cur;
+        return '<button class="accent-item' + (on ? " on" : "") + '" onclick="chooseAccent(\'' + a.id + '\')" style="color:' + a.color + '">' +
+          '<span class="accent-dot" style="background:' + a.color + '">' + (on ? "✓" : "") + '</span>' +
+          '<span class="nm">' + a.name + '</span>' +
+        '</button>';
+      }).join("") +
+    '</div>' +
+    '<div class="btns"><button class="btn-primary" style="flex:1" onclick="closeSheet()">完成</button></div>';
+  openSheet(html);
+}
+function chooseAccent(id){
+  setAccent(id);
+  syncAccentTip();
+  openAccent();
+  toast("已切换主题色：" + accentName());
+}
+function toggleTheme(){
+  var p = cycleTheme();
+  syncThemeUI();
+  toast(p === "system" ? "已切换：跟随系统" : p === "dark" ? "已开启深色模式" : "已关闭深色模式");
+}
+
+/* ========== 启动 ========== */
+try{
+  var saved = JSON.parse(localStorage.getItem("preview_profile") || "null");
+  if(saved && saved.nick) profile = saved;
+}catch(e){}
+renderProfile();
+syncThemeUI();
+if(typeof syncFeedbackUI === "function") syncFeedbackUI();
+refresh();
+</script>
+</body>
+</html>

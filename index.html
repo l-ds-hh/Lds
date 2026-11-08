@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>简账</title>
+<script src="theme.js"></script>
+<script src="accent.js"></script>
+<meta name="theme-color" content="#4C6FFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="简账">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="lock.css">
+<link rel="stylesheet" href="calendar.css">
+<link rel="stylesheet" href="extra.css">
+</head>
+<body>
+<div class="app">
+  <div class="hero"></div>
+
+  <header class="topbar">
+    <div class="title">简账</div>
+    <button class="act" id="budgetBtn" onclick="goBudget()">预算</button>
+  </header>
+
+  <main class="content">
+
+    <div class="balance-card">
+      <div class="label" id="balLabel">本月结余</div>
+      <div class="big"><span class="cur">¥</span><span id="balMain">0.00</span></div>
+      <div class="split">
+        <div>收入<b id="balIn">¥0.00</b></div>
+        <div>支出<b id="balOut">¥0.00</b></div>
+        <div>本月<b id="balCount">0 笔</b></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><h2>记一笔</h2></div>
+      <div class="input-card">
+        <div class="input-row">
+          <input id="q" type="text" placeholder="如：今天午餐花了25元"
+                 autocomplete="off" oninput="onType(this.value)">
+          <button class="btn-primary" onclick="submit()">记下</button>
+        </div>
+        <div class="parse-hint" id="hint"></div>
+
+        <div class="cat-tabs">
+          <button data-type="expense" onclick="switchType('expense')">支出</button>
+          <button data-type="income" onclick="switchType('income')">收入</button>
+        </div>
+
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>最近</h2>
+        <a href="records.html">全部账单 ›</a>
+      </div>
+      <div id="todayList"></div>
+    </div>
+
+
+
+  </main>
+
+  <nav class="tabbar">
+    <a class="tab active" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"/></svg>记账
+    </a>
+    <a class="tab" href="records.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>账单
+    </a>
+    <div class="tab fab-slot" id="fabSlot"></div>
+    <a class="tab" href="stats.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 20V10M12 20V4M6 20v-6"/></svg>统计
+    </a>
+    <a class="tab" href="mine.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>我的
+    </a>
+  </nav>
+
+  <div class="sheet-mask" id="mask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="handle"></div>
+    <h3 id="s-name">午餐</h3>
+    <div class="s-sub" id="s-sub">餐饮 · 12:30</div>
+    <div class="kv"><span>金额</span><b id="s-amount">¥25.00</b></div>
+    <div class="kv"><span>类型</span><b id="s-type">支出</b></div>
+    <div class="kv"><span>分类</span><b id="s-cat">餐饮</b></div>
+    <div class="btns">
+      <button class="btn-danger" onclick="delCurrent()">删除</button>
+      <button class="btn-ghost" onclick="closeSheet()">关闭</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="pwa.js"></script>
+  <script src="store.js"></script>
+<script src="icons.js"></script>
+<script src="feedback.js"></script>
+<script src="quick.js"></script>
+<script src="calendar.js"></script>
+<script src="lock.js"></script>
+<script>
+var curType = "expense";
+var curCat = null;
+var currentId = null;
+
+/* ===== 分类网格 ===== */
+function renderCats(){
+  document.querySelectorAll(".cat-tabs button").forEach(function(b){
+    b.classList.toggle("on", b.dataset.type === curType);
+  });
+  var list = Store.visibleCats(curType);
+  if(!list.length){
+    document.getElementById("catGrid").innerHTML =
+      '<div class="empty" style="grid-column:1/-1;padding:20px">' +
+      '<div class="s">这个类型下的分类都被隐藏了，去「我的 → 分类管理」打开</div></div>';
+    return;
+  }
+  if(!curCat || !list.some(function(c){ return c.id === curCat; })) curCat = list[0].id;
+
+  document.getElementById("catGrid").innerHTML = list.map(function(c){
+    var on = (c.id === curCat) ? " on" : "";
+    return '<button class="cat' + on + '" onclick="pickCat(\'' + c.id + '\')">' +
+             '<span class="ci">' + svgIcon(c.icon) + '</span>' +
+             '<span class="cn">' + c.name + '</span></button>';
+  }).join("");
+}
+function switchType(t){
+  if(t === curType) return;
+  curType = t; curCat = null;
+  renderCats();
+}
+function pickCat(id){ curCat = id; renderCats(); }
+
+/* ===== 顶部数据 ===== */
+function renderBalance(){
+  var m = Store.thisMonth();
+  var s = Store.summary(m);
+  document.getElementById("balLabel").textContent = Store.monthLabel(m) + "结余";
+  var bal = s.balance;
+  document.getElementById("balMain").textContent = (bal < 0 ? "-" : "") + Store.fmt(Math.abs(bal));
+  document.getElementById("balIn").textContent = "¥" + Store.fmt(s.income);
+  document.getElementById("balOut").textContent = "¥" + Store.fmt(s.expense);
+  document.getElementById("balCount").textContent = s.count + " 笔";
+
+  var st = Store.settings();
+  var btn = document.getElementById("budgetBtn");
+  if(st.budget > 0){
+    var left = st.budget - s.expense;
+    btn.textContent = left >= 0 ? "剩余 ¥" + Math.round(left) : "超支 ¥" + Math.round(-left);
+    btn.style.color = left >= 0 ? "var(--text-2)" : "var(--expense)";
+  } else {
+    btn.textContent = "设置预算";
+    btn.style.color = "";
+  }
+}
+function goBudget(){ location.href = "mine.html"; }
+
+/* ===== 最近记录 ===== */
+function renderRecent(){
+  var all = Store.all().sort(function(a, b){
+    return (b.date + b.time).localeCompare(a.date + a.time);
+  }).slice(0, 5);
+
+  if(!all.length){
+    document.getElementById("todayList").innerHTML =
+      '<div class="empty"><div class="t">还没有账单</div>' +
+      '<div class="s">在上面输入「午餐25元」，点「记下」试试</div></div>';
+    return;
+  }
+  document.getElementById("todayList").innerHTML = all.map(function(r){
+    var out = r.type !== "income";
+    return '<div class="record" onclick="openDetail(\'' + r.id + '\')">' +
+      '<div class="ico ' + (out ? "out" : "in") + '">' + svgIcon(Store.catIcon(r.cat)) + '</div>' +
+      '<div class="mid"><div class="name">' + escapeHTML(r.name) + '</div>' +
+      '<div class="sub">' + Store.catName(r.cat) + ' · ' + r.date.slice(5) + ' ' + r.time + '</div></div>' +
+      '<div class="amt ' + (out ? "out" : "in") + '">' + (out ? "−" : "+") + Store.fmt(r.amount) + '</div>' +
+    '</div>';
+  }).join("");
+}
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+  });
+}
+
+/* ===== 识别 ===== */
+var RULES = [
+  {cat:"food", re:/饭|餐|午餐|晚餐|早餐|奶茶|咖啡|吃|外卖|饮料|火锅|烧烤|零食/},
+  {cat:"traffic", re:/公交|地铁|打车|出租|滴滴|加油|停车|交通|高铁|火车|机票|单车/},
+  {cat:"shop", re:/买|购物|网购|淘宝|京东|拼多多|超市|日用品/},
+  {cat:"home", re:/房租|房贷|物业|中介|维修/},
+  {cat:"utilities", re:/水费|电费|燃气|取暖|宽带/},
+  {cat:"phone", re:/话费|手机|套餐|流量/},
+  {cat:"clothes", re:/衣服|鞋|裤子|外套|帽子|包包/},
+  {cat:"medical", re:/药|医院|看病|门诊|体检|挂号|牙医/},
+  {cat:"fun", re:/电影|游戏|KTV|唱歌|演出|门票|视频会员/},
+  {cat:"study", re:/书|课程|培训|学费|考试|网课/},
+  {cat:"sport", re:/健身|游泳|球|瑜伽|跑步/},
+  {cat:"beauty", re:/理发|美发|护肤|化妆|美甲|美容/},
+  {cat:"pet", re:/猫粮|狗粮|宠物|疫苗/},
+  {cat:"travel", re:/旅行|旅游|酒店|民宿|景点|度假/},
+  {cat:"gift", re:/礼金|随礼|请客|送礼|份子/}
+];
+var INCOME_RULES = [
+  {cat:"salary", re:/工资|薪水|发薪/},
+  {cat:"bonus", re:/奖金|年终奖|提成/},
+  {cat:"parttime", re:/兼职|外快|接单|稿费/},
+  {cat:"invest", re:/利息|分红|基金|股票|理财|收益/},
+  {cat:"reimburse", re:/报销/},
+  {cat:"redpacket", re:/红包|压岁钱/},
+  {cat:"refund", re:/退款|退货|返现/}
+];
+
+function parse(text){
+  var m = text.match(/(\d+(?:\.\d{1,2})?)/);
+  if(!m) return null;
+  var isIncome = /收入|工资|薪水|奖金|收到|到账|赚|报销|退款|红包|利息|分红/.test(text);
+  var rules = isIncome ? INCOME_RULES : RULES;
+  var cat = null;
+  for(var i = 0; i < rules.length; i++){ if(rules[i].re.test(text)){ cat = rules[i].cat; break; } }
+  if(!cat){
+    /* 自定义分类也参与匹配 */
+    var custom = Store.visibleCats(isIncome ? "income" : "expense").filter(function(c){
+      return c.custom && c.name && text.indexOf(c.name) >= 0;
+    })[0];
+    cat = custom ? custom.id : (isIncome ? "otherincome" : "other");
+  }
+  var date = Store.today();
+  if(/昨天/.test(text)) date = shiftDate(-1);
+  else if(/前天/.test(text)) date = shiftDate(-2);
+  return { amount: m[1], cat: cat, income: isIncome, date: date };
+}
+function shiftDate(delta){
+  var d = new Date(); d.setDate(d.getDate() + delta);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function onType(v){
+  var h = document.getElementById("hint");
+  if(!v.trim()){ h.className = "parse-hint"; return; }
+  var r = parse(v);
+  if(!r){ h.className = "parse-hint"; return; }
+  curType = r.income ? "income" : "expense";
+  curCat = r.cat;
+  renderCats();
+  h.className = "parse-hint show";
+  h.innerHTML = "识别为 <b>" + Store.catName(r.cat) + "</b> ｜ " +
+    (r.income ? "收入" : "支出") + " <b>¥" + r.amount + "</b>" +
+    (r.date !== Store.today() ? " · " + r.date.slice(5) : "");
+}
+
+function submit(){
+  var v = document.getElementById("q").value.trim();
+  if(!v){ toast("请输入内容，例如「午餐25元」"); return; }
+  var r = parse(v);
+  if(!r){ toast("没有识别到金额"); return; }
+  var name = v.replace(/今天|昨天|前天|花了|消费|支出|收入|元/g, "")
+              .replace(/(\d+(?:\.\d{1,2})?)/, "").trim() || Store.catName(r.cat);
+
+  Store.add({ date: r.date, name: name, cat: r.cat, amount: Number(r.amount), type: r.income ? "income" : "expense" });
+
+  document.getElementById("q").value = "";
+  document.getElementById("hint").className = "parse-hint";
+  toast("已记下：" + Store.catName(r.cat) + " ¥" + r.amount, { sound: "success" });
+
+  /* 超预算提醒 */
+  var st = Store.settings();
+  if(st.budget > 0){
+    var s = Store.summary(Store.thisMonth());
+    if(s.expense > st.budget){
+      setTimeout(function(){ toast("本月已超出预算 ¥" + Store.fmt(s.expense - st.budget)); }, 900);
+    }
+  }
+  renderBalance(); renderRecent();
+}
+
+/* ===== 详情 ===== */
+function openDetail(id){
+  var r = Store.all().find(function(x){ return x.id === id; });
+  if(!r) return;
+  currentId = id;
+  document.getElementById("s-name").textContent = r.name;
+  document.getElementById("s-sub").textContent = Store.catName(r.cat) + " · " + r.date + " " + r.time;
+  document.getElementById("s-amount").textContent = (r.type === "income" ? "+" : "−") + Store.fmt(r.amount);
+  document.getElementById("s-type").textContent = r.type === "income" ? "收入" : "支出";
+  document.getElementById("s-cat").textContent = Store.catName(r.cat);
+  document.getElementById("mask").classList.add("show");
+  document.getElementById("sheet").classList.add("show");
+}
+function delCurrent(){
+  if(!currentId) return;
+  if(!confirm("删除这笔账单？")) return;
+  Store.remove(currentId);
+  closeSheet();
+  toast("已删除", { sound: "remove" });
+  renderBalance(); renderRecent();
+}
+function closeSheet(){
+  document.getElementById("mask").classList.remove("show");
+  document.getElementById("sheet").classList.remove("show");
+}
+
+/* ===== 启动 ===== */
+renderCats();
+renderBalance();
+renderRecent();
+</script>
+</body>
+</html>
